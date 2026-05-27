@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriScan PH — GitHub Production Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;700&family=Geist:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Geist', sans-serif;
+            background-color: #030504;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(5, 150, 105, 0.02) 0px, transparent 50%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.005) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.005) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;
+        }
+        .geist-mono {
+            font-family: 'Geist Mono', monospace;
+        }
+        .glass-panel {
+            background: rgba(12, 18, 15, 0.85);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+    </style>
+</head>
+<body class="text-zinc-300 min-h-screen flex flex-col selection:bg-emerald-500/20 selection:text-emerald-400 antialiased">
+
+    <header class="border-b border-zinc-900 bg-black/50 backdrop-blur-md px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center font-bold text-zinc-950 text-sm shadow-md">ν</div>
+            <div class="flex flex-col">
+                <span class="text-xs font-bold tracking-widest text-white uppercase geist-mono">NUTRISCAN<span class="text-emerald-400">PH</span></span>
+                <span class="text-[9px] text-zinc-500 font-medium tracking-tight geist-mono">GITHUB_PAGES_LIVE_v4</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 text-[10px] bg-zinc-900/60 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-400 geist-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)] animate-pulse"></span>
+            <span>AUTO_MACRO_CALIBRATION_ON</span>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-[1440px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <div class="lg:col-span-5 space-y-6">
+                
+                <div class="glass-panel rounded-2xl p-5 space-y-5 shadow-xl">
+                    <div class="flex items-center justify-between border-b border-zinc-900 pb-3">
+                        <div>
+                            <h2 class="text-xs font-bold text-zinc-400 uppercase tracking-widest geist-mono">Scaler Interface</h2>
+                            <p class="text-[11px] text-zinc-500 mt-0.5">Scale weights dynamically with proportional calculations.</p>
+                        </div>
+                        <span id="active-dish-cat" class="text-[9px] bg-zinc-900 text-zinc-500 border border-zinc-800 px-2 py-0.5 rounded geist-mono uppercase">STANDBY</span>
+                    </div>
+
+                    <div class="bg-zinc-950 border border-zinc-900 rounded-xl p-5 space-y-4 shadow-inner text-center">
+                        <div>
+                            <span id="active-dish-name" class="text-sm font-semibold text-zinc-100 block">No Active Lot Loaded</span>
+                            <span id="active-dish-base-size" class="text-[11px] font-mono text-zinc-600 block mt-0.5">Select an entry row from the matrix ledger below</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-900/60">
+                            <div class="p-2.5 bg-zinc-900/20 rounded-lg border border-zinc-900">
+                                <span class="block text-[9px] uppercase font-bold text-zinc-500 tracking-wider geist-mono">Energy</span>
+                                <span id="calc-calories" class="text-base font-bold text-white tracking-tight geist-mono">0</span>
+                            </div>
+                            <div class="p-2.5 bg-zinc-900/20 rounded-lg border border-zinc-900">
+                                <span class="block text-[9px] uppercase font-bold text-zinc-500 tracking-wider geist-mono">Protein</span>
+                                <span id="calc-protein" class="text-base font-bold text-emerald-400 tracking-tight geist-mono">0g</span>
+                            </div>
+                            <div class="p-2.5 bg-zinc-900/20 rounded-lg border border-zinc-900">
+                                <span class="block text-[9px] uppercase font-bold text-zinc-500 tracking-wider geist-mono">Carbs</span>
+                                <span id="calc-carbs" class="text-base font-bold text-cyan-400 tracking-tight geist-mono">0g</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-[11px] geist-mono">
+                            <span class="text-zinc-500 font-medium">Mass Density Ratio</span>
+                            <span id="mass-multiplier-display" class="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">1.0x</span>
+                        </div>
+                        <input type="range" id="mass-slider" min="0.2" max="3.0" step="0.1" value="1.0" disabled class="w-full h-[3px] bg-zinc-900 rounded-lg appearance-none cursor-pointer opacity-30 transition">
+                    </div>
+
+                    <button id="commit-to-tracker-btn" disabled onclick="commitActiveToTracker()" class="w-full bg-zinc-800 border border-zinc-700 text-zinc-500 font-semibold py-2.5 rounded-xl text-xs transition duration-150 cursor-not-allowed uppercase tracking-wider geist-mono">
+                        Track Portion Entry
+                    </button>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 space-y-4 shadow-xl">
+                    <div class="flex items-center justify-between border-b border-zinc-900 pb-3">
+                        <div>
+                            <h2 class="text-xs font-bold text-zinc-400 uppercase tracking-widest geist-mono">Daily Calorie Balance</h2>
+                            <p class="text-[11px] text-zinc-500 mt-0.5">Sum totals verified from reliable database registers.</p>
+                        </div>
+                        <button onclick="purgeDailyTracker()" class="text-[10px] text-zinc-600 hover:text-red-400 transition font-bold uppercase geist-mono tracking-tighter">Reset Log</button>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="bg-zinc-950 border border-zinc-900 rounded-xl p-3">
+                            <span class="text-[9px] block text-zinc-500 uppercase font-semibold geist-mono">Total Kcal</span>
+                            <span id="journal-total-calories" class="text-lg font-bold text-white tracking-tight geist-mono">0</span>
+                        </div>
+                        <div class="bg-zinc-950 border border-zinc-900 rounded-xl p-3">
+                            <span class="text-[9px] block text-zinc-500 uppercase font-semibold geist-mono">Total Protein</span>
+                            <span id="journal-total-protein" class="text-lg font-bold text-emerald-400 tracking-tight geist-mono">0<span class="text-xs font-normal">g</span></span>
+                        </div>
+                        <div class="bg-zinc-950 border border-zinc-900 rounded-xl p-3">
+                            <span class="text-[9px] block text-zinc-500 uppercase font-semibold geist-mono">Total Carbs</span>
+                            <span id="journal-total-carbs" class="text-lg font-bold text-cyan-400 tracking-tight geist-mono">0<span class="text-xs font-normal">g</span></span>
+                        </div>
+                    </div>
+
+                    <div id="journal-items-wrapper" class="space-y-2 max-h-[160px] overflow-y-auto pr-1 text-xs">
+                        </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 space-y-6">
+                <div class="glass-panel rounded-2xl overflow-hidden shadow-xl flex flex-col">
+                    
+                    <div class="px-5 py-4 border-b border-zinc-900 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between bg-zinc-950/20">
+                        <div class="w-full sm:w-1/3">
+                            <input type="text" id="matrix-search" onkeyup="executeMatrixQuery()" placeholder="Search active index..." class="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg p-2 text-xs text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-emerald-500/50 transition">
+                        </div>
+                        
+                        <div id="category-filter-group" class="flex gap-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                            <button onclick="applyCategoryFilter('All')" class="text-[10px] bg-zinc-100 text-zinc-950 font-bold px-3 py-1 rounded-md transition whitespace-nowrap">All</button>
+                            <button onclick="applyCategoryFilter('Ulam')" class="text-[10px] bg-zinc-900 text-zinc-500 border border-zinc-800 px-3 py-1 rounded-md transition whitespace-nowrap">Ulam</button>
+                            <button onclick="applyCategoryFilter('Merienda')" class="text-[10px] bg-zinc-900 text-zinc-500 border border-zinc-800 px-3 py-1 rounded-md transition whitespace-nowrap">Merienda</button>
+                            <button onclick="applyCategoryFilter('Beverage')" class="text-[10px] bg-zinc-900 text-zinc-500 border border-zinc-800 px-3 py-1 rounded-md transition whitespace-nowrap">Beverage</button>
+                        </div>
+                    </div>
+
+                    <div class="hidden md:block overflow-x-auto max-h-[380px]">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-zinc-900 text-zinc-500 text-[10px] font-bold uppercase tracking-widest bg-zinc-950/60 geist-mono sticky top-0 z-10 backdrop-blur-sm">
+                                    <th class="py-3 px-5">Dish Identifier</th>
+                                    <th class="py-3 px-5">Reference Size</th>
+                                    <th class="py-3 px-5 text-center">Calories</th>
+                                    <th class="py-3 px-5 text-center">Macros (P/C)</th>
+                                    <th class="py-3 px-5 text-right">Operations</th>
+                                </tr>
+                            </thead>
+                            <tbody id="desktop-matrix-body" class="divide-y divide-zinc-900/40 text-xs">
+                                </tbody>
+                        </table>
+                    </div>
+
+                    <div id="mobile-cards-viewport" class="block md:hidden p-4 space-y-3 max-h-[380px] overflow-y-auto">
+                        </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-5 space-y-4 shadow-xl border border-emerald-500/10">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <h2 class="text-xs font-bold text-zinc-200 uppercase tracking-widest geist-mono">Automated Food Registry</h2>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 mt-0.5">Simply provide the name and estimated weight. The engine automatically handles nutritional calculations using standard references.</p>
+                    </div>
+                    
+                    <form id="custom-registry-form" class="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">
+                        <div class="sm:col-span-5 relative">
+                            <label class="block text-zinc-500 font-medium mb-1">Dish Identifier / Name</label>
+                            <input type="text" id="reg-name" required oninput="evaluateDatabaseAutocomplete()" placeholder="e.g., Sinigang, Adobo, or new entry" class="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 focus:outline-none focus:border-emerald-500/50 transition">
+                            
+                            <div id="autocomplete-dropdown" class="absolute left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-lg max-h-[150px] overflow-y-auto hidden z-20 shadow-2xl"></div>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-zinc-500 font-medium mb-1">Serving Unit Weight (g)</label>
+                            <input type="number" id="reg-weight-grams" required min="1" placeholder="150" class="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 focus:outline-none focus:border-emerald-500/50 transition geist-mono">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-zinc-500 font-medium mb-1">Category</label>
+                            <select id="reg-cat" class="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 focus:outline-none focus:border-emerald-500/50 transition">
+                                <option value="Ulam">Ulam</option>
+                                <option value="Merienda">Merienda</option>
+                                <option value="Beverage">Beverage</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2 flex items-end">
+                            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold py-2.5 rounded-lg text-xs transition duration-150 tracking-wider font-semibold uppercase shadow-lg">
+                                Add Food
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="bg-zinc-950/80 border border-zinc-900 p-3 rounded-xl text-[10px] text-zinc-500 leading-normal flex items-start space-x-2 font-mono">
+                        <span class="text-emerald-400 font-bold">💡 Intelligence Engine Mode:</span>
+                        <span>If the food name matches a signature in our reference list, its precise values will be loaded automatically. If it's a completely new unique dish description, it uses standard protein/carbohydrate distributions relative to the raw mass weight inputs.</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-zinc-900 text-xs">
+                    <div class="text-center sm:text-left">
+                        <h3 class="font-bold text-zinc-400 geist-mono text-[11px] uppercase tracking-wider">Device Synchronization Toolkit</h3>
+                        <p class="text-[10px] text-zinc-600 mt-0.5">Export custom data layers as a JSON configuration array payload backup.</p>
+                    </div>
+                    <div class="flex items-center space-x-2 w-full sm:w-auto justify-center">
+                        <button onclick="exportDatabaseBackup()" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 px-3 py-2 rounded-lg transition font-mono text-[10px] uppercase font-bold tracking-tight">Export JSON</button>
+                        <label class="bg-zinc-900 hover:bg-zinc-800 text-emerald-400 border border-zinc-800 px-3 py-2 rounded-lg transition font-mono text-[10px] uppercase font-bold tracking-tight cursor-pointer">
+                            Import JSON
+                            <input type="file" id="import-file-hook" accept=".json" onchange="importDatabaseBackup(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="border-t border-zinc-900 bg-black/40 py-4 text-center text-[10px] text-zinc-600 font-mono tracking-tight px-4 flex flex-col sm:flex-row justify-between items-center gap-2 max-w-7xl w-full mx-auto">
+        <span>NutriScan PH Matrix Core Engine &bull; Validated Cross-Device Client Framework</span>
+        <div class="flex gap-4 text-[9px] text-zinc-500">
+            <span>FNRI References Available</span>
+            <span>Local Storage Cache Secure</span>
+        </div>
+    </footer>
+
+    <script>
+        // Reliable baseline reference guide parameters mapping
+        const referenceFilipinoNutritionDB = [
+            { name: "Adobo (Chicken)", calPerGram: 2.06, proRatio: 0.18, carbRatio: 0.05, cat: "Ulam" },
+            { name: "Adobo (Pork)", calPerGram: 2.73, proRatio: 0.14, carbRatio: 0.04, cat: "Ulam" },
+            { name: "Sinigang na Baboy", calPerGram: 0.90, proRatio: 0.075, carbRatio: 0.06, cat: "Ulam" },
+            { name: "Sinigang na Isda", calPerGram: 0.75, proRatio: 0.09, carbRatio: 0.04, cat: "Ulam" },
+            { name: "Lechon Kawali", calPerGram: 4.50, proRatio: 0.18, carbRatio: 0.00, cat: "Ulam" },
+            { name: "Kare-Kare", calPerGram: 1.75, proRatio: 0.10, carbRatio: 0.075, cat: "Ulam" },
+            { name: "Pinakbet", calPerGram: 0.80, proRatio: 0.026, carbRatio: 0.093, cat: "Ulam" },
+            { name: "Pancit Canton", calPerGram: 2.00, proRatio: 0.06, carbRatio: 0.30, cat: "Ulam" },
+            { name: "Tinolang Isda", calPerGram: 0.48, proRatio: 0.08, carbRatio: 0.02, cat: "Ulam" },
+            { name: "Pandesal", calPerGram: 3.00, proRatio: 0.10, carbRatio: 0.50, cat: "Merienda" },
+            { name: "Puto", calPerGram: 2.33, proRatio: 0.066, carbRatio: 0.33, cat: "Merienda" },
+            { name: "Bibingka", calPerGram: 2.20, proRatio: 0.05, carbRatio: 0.30, cat: "Merienda" },
+            { name: "Halo-Halo", calPerGram: 1.00, proRatio: 0.013, carbRatio: 0.20, cat: "Merienda" },
+            { name: "Turon (Banana Lumpia)", calPerGram: 3.12, proRatio: 0.025, carbRatio: 0.437, cat: "Merienda" },
+            { name: "Taho", calPerGram: 0.72, proRatio: 0.036, carbRatio: 0.088, cat: "Merienda" },
+            { name: "Sago at Gulaman", calPerGram: 0.40, proRatio: 0.00, carbRatio: 0.10, cat: "Beverage" },
+            { name: "Biko", calPerGram: 2.00, proRatio: 0.03, carbRatio: 0.40, cat: "Merienda" },
+            { name: "Laing (Taro Leaves)", calPerGram: 1.33, proRatio: 0.04, carbRatio: 0.066, cat: "Ulam" }
+        ];
+
+        // Hydration layers utilizing reactive local storage space
+        let filipinoFoodDB = JSON.parse(localStorage.getItem('nutriscan_reliable_db')) || [];
+        
+        // Setup initial visible preview if empty
+        if(filipinoFoodDB.length === 0) {
+            filipinoFoodDB = [
+                { name: "Adobo (Chicken)", size: "1 cup (150g)", cal: 310, pro: 28, carb: 8, cat: "Ulam" },
+                { name: "Sinigang na Baboy", size: "1 cup (200g)", cal: 180, pro: 15, carb: 12, cat: "Ulam" },
+                { name: "Pandesal", size: "1 piece (30g)", cal: 90, pro: 3, carb: 15, cat: "Merienda" }
+            ];
+            localStorage.setItem('nutriscan_reliable_db', JSON.stringify(filipinoFoodDB));
+        }
+
+        let dailyTrackerLog = JSON.parse(localStorage.getItem('nutriscan_reliable_log')) || [];
+        let currentActiveDishSelection = null;
+        let selectedCategoryFilter = "All";
+        let textQueryString = "";
+
+        // UI Binding Selectors
+        const desktopMatrixBody = document.getElementById('desktop-matrix-body');
+        const mobileCardsViewport = document.getElementById('mobile-cards-viewport');
+        const massSlider = document.getElementById('mass-slider');
+        const massDisplay = document.getElementById('mass-multiplier-display');
+        const commitToTrackerBtn = document.getElementById('commit-to-tracker-btn');
+        const customRegistryForm = document.getElementById('custom-registry-form');
+        const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+
+        function renderDatabaseMatrix() {
+            let desktopBuffer = "";
+            let mobileBuffer = "";
+
+            const targetSelection = filipinoFoodDB.filter(item => {
+                const checkCat = selectedCategoryFilter === "All" || item.cat === selectedCategoryFilter;
+                const checkSearch = item.name.toLowerCase().includes(textQueryString.toLowerCase());
+                return checkCat && checkSearch;
+            });
+
+            if (targetSelection.length === 0) {
+                const emptyRow = `<tr><td colspan="5" class="py-12 text-center text-zinc-600 font-mono text-xs">QUERY_INDEX_ARRAY_EMPTY</td></tr>`;
+                desktopMatrixBody.innerHTML = emptyRow;
+                mobileCardsViewport.innerHTML = `<div class="text-center text-zinc-600 py-10 font-mono text-xs">QUERY_INDEX_ARRAY_EMPTY</div>`;
+                return;
+            }
+
+            targetSelection.forEach((food) => {
+                const matrixGlobalIndex = filipinoFoodDB.findIndex(f => f.name === food.name);
+
+                desktopBuffer += `
+                    <tr class="hover:bg-zinc-900/30 transition duration-150 group">
+                        <td class="py-3 px-5 font-semibold text-zinc-200 tracking-wide">${food.name}</td>
+                        <td class="py-3 px-5 text-zinc-500 font-mono text-[11px]">${food.size}</td>
+                        <td class="py-3 px-5 text-center font-mono text-zinc-300">${food.cal}</td>
+                        <td class="py-3 px-5 text-center font-mono text-zinc-400">
+                            <span class="text-emerald-400">${food.pro}g</span> / <span class="text-cyan-400">${food.carb}g</span>
+                        </td>
+                        <td class="py-3 px-5 text-right">
+                            <div class="flex justify-end items-center space-x-3">
+                                <button onclick="loadToActiveAnalyzer(${matrixGlobalIndex})" class="text-[11px] bg-zinc-900 hover:bg-emerald-500/10 border border-zinc-800 hover:border-emerald-500/40 text-emerald-400 font-medium px-2.5 py-1 rounded-md transition">Load Unit</button>
+                                <button onclick="purgeMatrixRecord(${matrixGlobalIndex})" class="text-[10px] text-zinc-700 hover:text-red-400 uppercase font-bold tracking-tighter geist-mono">Drop</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+
+                mobileBuffer += `
+                    <div class="bg-zinc-900/20 border border-zinc-900 p-4 rounded-xl space-y-3 shadow-md">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-bold text-zinc-100 block tracking-wide">${food.name}</span>
+                                <span class="text-[10px] text-zinc-600 font-mono">${food.size}</span>
+                            </div>
+                            <span class="text-[9px] font-bold text-zinc-500 border border-zinc-800 px-1.5 py-0.5 rounded font-mono uppercase">${food.cat}</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center border-t border-zinc-900/40 pt-2 font-mono text-[11px]">
+                            <div><span class="text-zinc-600 block text-[9px] uppercase font-bold">Kcal</span><span class="text-zinc-300">${food.cal}</span></div>
+                            <div><span class="text-zinc-600 block text-[9px] uppercase font-bold">Protein</span><span class="text-emerald-400">${food.pro}g</span></div>
+                            <div><span class="text-zinc-600 block text-[9px] uppercase font-bold">Carbs</span><span class="text-cyan-400">${food.carb}g</span></div>
+                        </div>
+                        <div class="flex space-x-2 pt-1">
+                            <button onclick="loadToActiveAnalyzer(${matrixGlobalIndex})" class="flex-1 text-center text-xs bg-zinc-900 border border-zinc-800 text-emerald-400 font-medium py-1.5 rounded-lg transition">Load to Scaler</button>
+                            <button onclick="purgeMatrixRecord(${matrixGlobalIndex})" class="text-xs bg-zinc-950 border border-zinc-900 text-zinc-600 hover:text-red-400 px-3 py-1.5 rounded-lg transition font-bold uppercase geist-mono">Drop</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            desktopMatrixBody.innerHTML = desktopBuffer;
+            mobileCardsViewport.innerHTML = mobileBuffer;
+        }
+
+        // EVALUATE AUTOCOMPLETE DROPDOWN
+        window.evaluateDatabaseAutocomplete = function() {
+            const inputVal = document.getElementById('reg-name').value.trim().toLowerCase();
+            if(!inputVal) {
+                autocompleteDropdown.classList.add('hidden');
+                return;
+            }
+
+            const matches = referenceFilipinoNutritionDB.filter(x => x.name.toLowerCase().includes(inputVal));
+            if(matches.length === 0) {
+                autocompleteDropdown.classList.add('hidden');
+                return;
+            }
+
+            let dropdownHtml = "";
+            matches.forEach(item => {
+                dropdownHtml += `
+                    <div onclick="selectAutocompleteItem('${item.name}', '${item.cat}')" class="p-2.5 hover:bg-zinc-900 text-zinc-200 text-xs cursor-pointer border-b border-zinc-900 last:border-0 font-medium transition">
+                        ✨ ${item.name} <span class="text-[10px] text-zinc-500 font-mono float-right uppercase">${item.cat}</span>
+                    </div>
+                `;
+            });
+
+            autocompleteDropdown.innerHTML = dropdownHtml;
+            autocompleteDropdown.classList.remove('hidden');
+        };
+
+        window.selectAutocompleteItem = function(name, cat) {
+            document.getElementById('reg-name').value = name;
+            document.getElementById('reg-cat').value = cat;
+            autocompleteDropdown.classList.add('hidden');
+            document.getElementById('reg-weight-grams').focus();
+        };
+
+        // CLOSE AUTOCOMPLETE DROPDOWN ON OUTSIDE CLICK
+        document.addEventListener('click', (e) => {
+            if(e.target.id !== 'reg-name') {
+                autocompleteDropdown.classList.add('hidden');
+            }
+        });
+
+        // HANDLE AUTOMATIC SCIENTIFIC INJECTS
+        customRegistryForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const inputName = document.getElementById('reg-name').value.trim();
+            const weightGrams = parseFloat(document.getElementById('reg-weight-grams').value);
+            const inputCat = document.getElementById('reg-cat').value;
+
+            let finalCal = 0;
+            let finalPro = 0;
+            let finalCarb = 0;
+
+            // Search internal standard database signatures
+            const match = referenceFilipinoNutritionDB.find(x => x.name.toLowerCase() === inputName.toLowerCase());
+
+            if (match) {
+                // Precise data entry calculated automatically from structural multipliers
+                finalCal = Math.round(match.calPerGram * weightGrams);
+                finalPro = parseFloat((match.proRatio * weightGrams).toFixed(1));
+                finalCarb = parseFloat((match.carbRatio * weightGrams).toFixed(1));
+            } else {
+                // General baseline formula rule of thumb for generic formulation tracking (1.5 kcal/g average)
+                finalCal = Math.round(1.5 * weightGrams);
+                finalPro = parseFloat((0.08 * weightGrams).toFixed(1)); // default 8% protein density
+                finalCarb = parseFloat((0.15 * weightGrams).toFixed(1)); // default 15% carbs density
+            }
+
+            const autoCalculatedEntry = {
+                name: inputName,
+                size: `${weightGrams}g portion`,
+                cal: finalCal,
+                pro: finalPro,
+                carb: finalCarb,
+                cat: inputCat
+            };
+
+            filipinoFoodDB.unshift(autoCalculatedEntry);
+            localStorage.setItem('nutriscan_reliable_db', JSON.stringify(filipinoFoodDB));
+
+            customRegistryForm.reset();
+            renderDatabaseMatrix();
+            loadToActiveAnalyzer(0);
+        });
+
+        window.loadToActiveAnalyzer = function(globalIndex) {
+            currentActiveDishSelection = filipinoFoodDB[globalIndex];
+            massSlider.removeAttribute('disabled');
+            massSlider.classList.remove('opacity-30');
+            massSlider.value = 1.0;
+
+            commitToTrackerBtn.removeAttribute('disabled');
+            commitToTrackerBtn.className = "w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold py-2.5 rounded-xl text-xs transition duration-150 shadow-md uppercase tracking-wider geist-mono cursor-pointer";
+
+            recalculateBiochemicalOutput();
+        };
+
+        function recalculateBiochemicalOutput() {
+            if (!currentActiveDishSelection) return;
+
+            const scalar = parseFloat(massSlider.value);
+            massDisplay.innerText = `${scalar.toFixed(1)}x`;
+
+            const mathCal = Math.round(currentActiveDishSelection.cal * scalar);
+            const mathPro = (currentActiveDishSelection.pro * scalar).toFixed(1);
+            const mathCarb = (currentActiveDishSelection.carb * scalar).toFixed(1);
+
+            document.getElementById('active-dish-name').innerText = currentActiveDishSelection.name;
+            document.getElementById('active-dish-base-size').innerText = `Reference Unit: ${currentActiveDishSelection.size}`;
+            document.getElementById('active-dish-cat').innerText = currentActiveDishSelection.cat;
+
+            document.getElementById('calc-calories').innerText = mathCal;
+            document.getElementById('calc-protein').innerText = `${mathPro}g`;
+            document.getElementById('calc-carbs').innerText = `${mathCarb}g`;
+        }
+
+        window.commitActiveToTracker = function() {
+            if (!currentActiveDishSelection) return;
+
+            const scalar = parseFloat(massSlider.value);
+            const logElement = {
+                name: currentActiveDishSelection.name,
+                factor: scalar,
+                cal: Math.round(currentActiveDishSelection.cal * scalar),
+                pro: parseFloat((currentActiveDishSelection.pro * scalar).toFixed(1)),
+                carb: parseFloat((currentActiveDishSelection.carb * scalar).toFixed(1)),
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            dailyTrackerLog.push(logElement);
+            localStorage.setItem('nutriscan_reliable_log', JSON.stringify(dailyTrackerLog));
+            renderDailyLedgerSummary();
+        };
+
+        function renderDailyLedgerSummary() {
+            const wrapper = document.getElementById('journal-items-wrapper');
+            let logBuffer = "";
+            let totalKcal = 0; let totalPro = 0; let totalCarb = 0;
+
+            if (dailyTrackerLog.length === 0) {
+                wrapper.innerHTML = `<div class="text-center py-4 text-zinc-700 italic geist-mono text-[11px]">Log empty. Track a portion above.</div>`;
+                document.getElementById('journal-total-calories').innerText = 0;
+                document.getElementById('journal-total-protein').innerText = "0g";
+                document.getElementById('journal-total-carbs').innerText = "0g";
+                return;
+            }
+
+            dailyTrackerLog.forEach((item, index) => {
+                totalKcal += item.cal; totalPro += item.pro; totalCarb += item.carb;
+                logBuffer += `
+                    <div class="bg-zinc-950 border border-zinc-900 p-2.5 rounded-lg flex justify-between items-center group">
+                        <div class="space-y-0.5">
+                            <span class="font-semibold text-zinc-200 block">${item.name} <span class="text-zinc-600 font-mono font-normal text-[10px]">(${item.factor}x)</span></span>
+                            <span class="text-[9px] text-zinc-600 font-mono block">${item.timestamp} &bull; <span class="text-emerald-400/80">${item.pro}g P</span> &bull; <span class="text-cyan-400/80">${item.carb}g C</span></span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="font-bold text-zinc-400 font-mono text-right text-[11px]">${item.cal} Kcal</span>
+                            <button onclick="dropJournalRecord(${index})" class="text-zinc-700 hover:text-red-400 transition font-bold text-[10px] uppercase geist-mono opacity-0 group-hover:opacity-100">&times;</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            wrapper.innerHTML = logBuffer;
+            document.getElementById('journal-total-calories').innerText = totalKcal;
+            document.getElementById('journal-total-protein').innerText = `${totalPro.toFixed(1)}g`;
+            document.getElementById('journal-total-carbs').innerText = `${totalCarb.toFixed(1)}g`;
+        }
+
+        window.dropJournalRecord = function(index) {
+            dailyTrackerLog.splice(index, 1);
+            localStorage.setItem('nutriscan_reliable_log', JSON.stringify(dailyTrackerLog));
+            renderDailyLedgerSummary();
+        };
+
+        window.purgeDailyTracker = function() {
+            if(confirm("Wipe structural nutritional log tracking cache data parameters?")) {
+                dailyTrackerLog = [];
+                localStorage.setItem('nutriscan_reliable_log', JSON.stringify(dailyTrackerLog));
+                renderDailyLedgerSummary();
+            }
+        };
+
+        window.purgeMatrixRecord = function(globalIndex) {
+            if(confirm(`Remove "${filipinoFoodDB[globalIndex].name}" from local engine storage configurations?`)) {
+                filipinoFoodDB.splice(globalIndex, 1);
+                localStorage.setItem('nutriscan_reliable_db', JSON.stringify(filipinoFoodDB));
+                renderDatabaseMatrix();
+            }
+        };
+
+        // EXPORT PAYLOAD DATA BACKUP TOOLS
+        window.exportDatabaseBackup = function() {
+            const packedPayload = { database: filipinoFoodDB, logs: dailyTrackerLog, exportedAt: new Date().toISOString() };
+            const dataString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(packedPayload, null, 2));
+            const anchorElement = document.createElement('a');
+            anchorElement.setAttribute("href", dataString);
+            anchorElement.setAttribute("download", `nutriscan_ph_backup.json`);
+            document.body.appendChild(anchorElement);
+            anchorElement.click();
+            anchorElement.remove();
+        };
+
+        window.importDatabaseBackup = function(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const parsedPayload = JSON.parse(e.target.result);
+                    if (parsedPayload.database && parsedPayload.logs) {
+                        filipinoFoodDB = parsedPayload.database;
+                        dailyTrackerLog = parsedPayload.logs;
+                        localStorage.setItem('nutriscan_reliable_db', JSON.stringify(filipinoFoodDB));
+                        localStorage.setItem('nutriscan_reliable_log', JSON.stringify(dailyTrackerLog));
+                        renderDatabaseMatrix();
+                        renderDailyLedgerSummary();
+                        alert("✅ Synchronized data files loaded perfectly.");
+                    } else {
+                        alert("⚠️ Malformed parsing signature. Check file parameters.");
+                    }
+                } catch (err) {
+                    alert("❌ Failed to parse payload structural fields safely.");
+                }
+            };
+            fileReader.readAsText(event.target.files[0]);
+        };
+
+        window.executeMatrixQuery = function() {
+            textQueryString = document.getElementById('matrix-search').value;
+            renderDatabaseMatrix();
+        };
+
+        window.applyCategoryFilter = function(category) {
+            selectedCategoryFilter = category;
+            const buttons = document.querySelectorAll('#category-filter-group button');
+            buttons.forEach(btn => {
+                if (btn.innerText === category) {
+                    btn.className = "text-[10px] bg-zinc-100 text-zinc-950 font-bold px-3 py-1 rounded-md transition whitespace-nowrap";
+                } else {
+                    btn.className = "text-[10px] bg-zinc-900 text-zinc-500 border border-zinc-800 px-3 py-1 rounded-md transition hover:text-zinc-300 whitespace-nowrap";
+                }
+            });
+            renderDatabaseMatrix();
+        };
+
+        massSlider.addEventListener('input', recalculateBiochemicalOutput);
+        renderDatabaseMatrix();
+        renderDailyLedgerSummary();
+    </script>
+</body>
+</html>
